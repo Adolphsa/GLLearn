@@ -1,8 +1,10 @@
 package com.lucas.gl.base
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import com.lucas.gl.utils.BufferUtil
 import com.lucas.gl.utils.LoggerConfig
 import com.lucas.gl.utils.ShaderHelper
 import java.nio.ByteBuffer
@@ -15,8 +17,8 @@ import javax.microedition.khronos.opengles.GL10
 abstract class BaseRenderer(val context: Context) : GLSurfaceView.Renderer{
 
     protected var program = 0
-//    public var rendererCallback: RendererCallback? = null
-//    public var isReadCurrentFrame = false
+    public var rendererCallback: RendererCallback? = null
+    public var isReadCurrentFrame = false
     protected var outputWidth: Int = 0
     protected var outputHeight: Int = 0
 
@@ -57,6 +59,38 @@ abstract class BaseRenderer(val context: Context) : GLSurfaceView.Renderer{
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         outputWidth = width
         outputHeight = height
+    }
+
+    /**
+     * 获取当前画面帧,并回调接口
+     */
+    protected fun onReadPixel(x: Int = 0, y: Int = 0, width: Int = outputWidth, height: Int = outputHeight) {
+        if (!isReadCurrentFrame) {
+            return
+        }
+        isReadCurrentFrame = false
+        val buffer = ByteBuffer.allocate(width * height * BufferUtil.BYTES_PER_FLOAT)
+        GLES30.glReadPixels(x,
+            y,
+            width,
+            height,
+            GLES30.GL_RGBA,
+            GLES30.GL_UNSIGNED_BYTE, buffer)
+        rendererCallback!!.onRendererDone(buffer, width, height)
+    }
+
+    protected fun readPixel(w: Int = outputWidth, h: Int = outputHeight): Bitmap {
+        val buffer = ByteBuffer.allocate(w * h * 4)
+        GLES30.glReadPixels(0,
+            0,
+            w,
+            h,
+            GLES30.GL_RGBA,
+            GLES30.GL_UNSIGNED_BYTE, buffer)
+
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bitmap.copyPixelsFromBuffer(buffer)
+        return bitmap
     }
 
     public open fun onClick() {}

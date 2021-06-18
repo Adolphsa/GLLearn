@@ -23,13 +23,16 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
            #version 300 es
             layout(location = 0) in vec4 a_Position;
             layout(location = 1) in vec2 a_TexCoord;
+            layout(location = 2) in vec2 a_TexCoord2;
             
             out vec2 v_TexCoord;
+            out vec2 v_TexCoord2;
             
             uniform mat4 u_Matrix;
             
             void main() {
                 v_TexCoord = a_TexCoord;
+                v_TexCoord2 = a_TexCoord2;
                 gl_Position = u_Matrix * a_Position;
             }
         """
@@ -38,6 +41,7 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
            #version 300 es
             precision mediump float;
             in vec2 v_TexCoord;
+            in vec2 v_TexCoord2;
             
             //sampler2D：二维纹理数据的数组
             uniform sampler2D u_TextureUnit1;
@@ -45,10 +49,18 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
             
             out vec4 fragColor;
             
+            bool isOutRect(vec2 coord) {
+                return coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0;
+            }
+            
             void main() {
+                //皮卡丘
                 vec4 texture1 = texture(u_TextureUnit1, v_TexCoord);
-                vec4 texture2 = texture(u_TextureUnit2, v_TexCoord);
-                if (texture1.a != 0.0) {
+                //杰尼龟
+                vec4 texture2 = texture(u_TextureUnit2, v_TexCoord2);
+                bool isOut = isOutRect(v_TexCoord2);
+                
+                if (isOut) {
                     fragColor = texture1;
                 } else {
                     fragColor = texture2;
@@ -59,11 +71,11 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
 
         private val POSITION_COMPONENT_COUNT = 2
 
-        private val POINT_DATA = floatArrayOf(
-            2 * -0.5f, -0.5f * 2,
-            2 * -0.5f, 0.5f * 2,
-            2 * 0.5f, 0.5f * 2,
-            2 * 0.5f, -0.5f * 2
+        private val DEFAULT_VERTEX_DATA = floatArrayOf(
+            -1.0f, -1.0f,
+            -1.0f, 1.0f,
+            1.0f, 1.0f,
+            1.0f, -1.0f
         )
 
         /**
@@ -74,6 +86,13 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
             0f, 0f,
             1f, 0f,
             1f, 1f
+        )
+
+        private val TEX_VERTEX2 = floatArrayOf(
+            -0.4f, 1.4f,
+            -0.4f, -0.4f,
+            1.4f, -0.4f,
+            1.4f, 1.4f
         )
 
         /**
@@ -87,6 +106,7 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
     private var uTextureUnitLocation1: Int = 0
     private var uTextureUnitLocation2: Int = 0
     private val mTexVertexBuffer: FloatBuffer
+    private val mTexVertexBuffer2: FloatBuffer
 
     /**
      * 纹理数据
@@ -96,8 +116,21 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
     private var mProjectionMatrixHelper: ProjectionMatrixHelper? = null
 
     init {
-        mVertexData = BufferUtil.createFloatBuffer(POINT_DATA)
+        mVertexData = BufferUtil.createFloatBuffer(DEFAULT_VERTEX_DATA)
+//        val vertexToTexture = vertexToTexture(PIKACHU_VERTEX_DATA)
         mTexVertexBuffer = BufferUtil.createFloatBuffer(TEX_VERTEX)
+        mTexVertexBuffer2 = BufferUtil.createFloatBuffer(TEX_VERTEX2)
+    }
+
+
+
+    fun vertexToTexture(vertex: FloatArray): FloatArray {
+        return floatArrayOf(
+            -0.4f, 1.4f,
+            -0.4f, -0.4f,
+            1.4f, -0.4f,
+            1.4f, 1.4f
+        )
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -131,11 +164,21 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
             GLES30.GL_FLOAT,
             false,
             0,
-            mTexVertexBuffer
-        )
+            mTexVertexBuffer)
         GLES30.glEnableVertexAttribArray(1)
 
-        GLES30.glClearColor(0f, 0f, 0f, 1f)
+        //加载纹理坐标2
+        mTexVertexBuffer2.position(0)
+        GLES30.glVertexAttribPointer(
+            2,
+            TEX_VERTEX_COMPONENT_COUNT,
+            GLES30.GL_FLOAT,
+            false,
+            0,
+            mTexVertexBuffer2)
+        GLES30.glEnableVertexAttribArray(2)
+
+        GLES30.glClearColor(1f, 0f, 0f, 1f)
         // 开启纹理透明混合，这样才能绘制透明图片
         GLES30.glEnable(GL10.GL_BLEND)
         GLES30.glBlendFunc(GL10.GL_ONE, GL10.GL_ONE_MINUS_SRC_ALPHA)
@@ -156,7 +199,7 @@ class L6_2_1_TextureRenderer(context: Context) : BaseRenderer(context) {
         GLES30.glDrawArrays(
             GLES30.GL_TRIANGLE_FAN,
             0,
-            POINT_DATA.size / POSITION_COMPONENT_COUNT
+            DEFAULT_VERTEX_DATA.size / POSITION_COMPONENT_COUNT
         )
     }
 

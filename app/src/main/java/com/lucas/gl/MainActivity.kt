@@ -1,17 +1,23 @@
 package com.lucas.gl
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.ListView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.lucas.gl.base.BaseRenderer
+import com.lucas.gl.render.L7_1_FBORenderer
+import com.lucas.gl.render.L7_2_FBORenderer
+import com.lucas.gl.utils.BitmapUtil
 import pub.devrel.easypermissions.EasyPermissions
+import java.io.File
+import java.io.IOException
+import java.nio.ByteBuffer
 
 class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
 
@@ -112,6 +118,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
         glSurfaceView!!.setRenderer(renderer)
         glSurfaceView!!.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
 
+        if (clickClass == L7_1_FBORenderer::class.java ||
+            clickClass == L7_2_FBORenderer::class.java){
+            readCurrentFrame(renderer as BaseRenderer)
+        }
+
 
         glSurfaceView!!.setOnClickListener {
             glSurfaceView!!.requestRender()
@@ -119,6 +130,41 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
                 renderer.onClick()
             }
 
+        }
+    }
+
+    @SuppressLint("SdCardPath")
+    private fun readCurrentFrame(renderer: BaseRenderer) {
+        val imageView = ImageView(this)
+        val params = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        root.addView(imageView, params)
+        renderer.rendererCallback = object : BaseRenderer.RendererCallback{
+            override fun onRendererDone(data: ByteBuffer, width: Int, height: Int) {
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                bitmap.copyPixelsFromBuffer(data)
+                val destFile = File("/sdcard/AA/test"
+                        //+ String.valueOf(System.currentTimeMillis())
+                        + ".jpg")
+                try {
+                    File("/sdcard/AA").mkdirs()
+                    destFile.createNewFile()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+
+                Thread(Runnable {
+                    BitmapUtil.save(bitmap, Bitmap.CompressFormat.JPEG, 100, destFile)
+                    imageView.post { imageView.setImageBitmap(BitmapFactory.decodeFile(destFile.path)) }
+                }).start()
+                data.clear()
+            }
+
+        }
+
+        imageView.setOnClickListener {
+            renderer.isReadCurrentFrame = true
+            glSurfaceView!!.requestRender()
         }
     }
 

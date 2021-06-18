@@ -47,4 +47,8 @@ class ProjectionMatrixHelper(program: Int, name: String) {
             0
         )
     }
+
+    fun HorizontalFlip() {
+        Matrix.scaleM(mProjectionMatrix, 0, 1f, -1f, 1f)
+    }
 }
