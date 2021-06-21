@@ -4,6 +4,7 @@ import android.content.Context
 
 /**
  * 反色滤镜
+ * RGB三个通道的颜色都取反，而alpha通道不变。
  * Created by lucas on 2021/6/18.
  */
 class InverseFilter(context: Context) :

@@ -3,8 +3,7 @@ package com.lucas.gl.render
 import android.content.Context
 import com.lucas.gl.R
 import com.lucas.gl.base.BaseRenderer
-import com.lucas.gl.filter.BaseFilter
-import com.lucas.gl.filter.InverseFilter
+import com.lucas.gl.filter.*
 import com.lucas.gl.utils.TextureHelper
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -23,6 +22,12 @@ class L8_1_FilterRenderer(context: Context) : BaseRenderer(context){
     init {
         filterList.add(BaseFilter(context))
         filterList.add(InverseFilter(context))
+        filterList.add(GrayFilter(context))
+        filterList.add(LightUpFilter(context))
+        filterList.add(ClonePartFilter(context))
+        filterList.add(CloneFullFilter(context))
+        filterList.add(CrossFilter(context))
+        filterList.add(ScaleFilter(context))
         currentFilter = filterList[0]
     }
 

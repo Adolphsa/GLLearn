@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lucas.gl.base.BaseRenderer
 import com.lucas.gl.render.L7_1_FBORenderer
 import com.lucas.gl.render.L7_2_FBORenderer
+import com.lucas.gl.render.L8_1_FilterRenderer
 import com.lucas.gl.utils.BitmapUtil
 import pub.devrel.easypermissions.EasyPermissions
 import java.io.File
@@ -121,6 +122,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
         if (clickClass == L7_1_FBORenderer::class.java ||
             clickClass == L7_2_FBORenderer::class.java){
             readCurrentFrame(renderer as BaseRenderer)
+        } else if (clickClass == L8_1_FilterRenderer::class.java) {
+            glSurfaceView!!.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         }
 
 
